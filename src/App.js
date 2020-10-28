@@ -1,31 +1,55 @@
-import React from "react";
+import React, { useEffect, useState } from 'react'
 
-import "./styles.css";
+import api from './services/api'
+import './styles.css'
 
 function App() {
-  async function handleAddRepository() {
-    // TODO
-  }
+    const [repositories, setRepositories] = useState([])
+    
+    useEffect(() => {
+        api.get('repositories').then(response => {
+            setRepositories(response.data)
+        })
+    }, [])
 
-  async function handleRemoveRepository(id) {
-    // TODO
-  }
+    async function handleAddRepository() {
+        const response = await api.post('repositories', { 
+            title: 'Novo Repositório ' + Date.now(),
+            url: 'http://github.com/...',
+            techs: ['Node.js', '...']
+        })
 
-  return (
-    <div>
-      <ul data-testid="repository-list">
-        <li>
-          Repositório 1
+        const repository = response.data
+        setRepositories([ ... repositories, repository ])
+    }
 
-          <button onClick={() => handleRemoveRepository(1)}>
-            Remover
-          </button>
-        </li>
-      </ul>
+    async function handleRemoveRepository(id) {
+        const response = await api.delete(`repositories/${id}`)
 
-      <button onClick={handleAddRepository}>Adicionar</button>
-    </div>
-  );
+        repositories.splice(repositories.findIndex(repository => { return repository.id === id }), 1)
+        setRepositories([ ... repositories ])
+    }
+
+    return (
+        <div>
+        <ul data-testid='repository-list'>
+            {
+                repositories.map(repo => {
+                    return (
+                        <li key={ repo.id }>
+                            { repo.title }        
+                            <button onClick={() => handleRemoveRepository(repo.id)}>
+                                Remover
+                            </button>
+                        </li>
+                    )
+                })
+            }
+        </ul>
+
+        <button onClick={handleAddRepository}>Adicionar</button>
+        </div>
+    )
 }
 
-export default App;
+export default App
